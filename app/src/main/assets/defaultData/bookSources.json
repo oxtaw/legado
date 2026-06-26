@@ -1,0 +1,125 @@
+[
+  {
+    "bookSourceComment": "中国哲学书电子化计划",
+    "bookSourceGroup": "古籍",
+    "bookSourceName": "中国哲学书电子化计划",
+    "bookSourceType": 0,
+    "bookSourceUrl": "https://ctext.org",
+    "customOrder": 0,
+    "enabled": true,
+    "enabledExplore": true,
+    "exploreUrl": "四大名著::https://ctext.org/wiki.pl?if=gb&chapter=685459\n儒家经典::https://ctext.org/wiki.pl?if=gb&res=1100\n道家经典::https://ctext.org/wiki.pl?if=gb&res=1103\n佛家经典::https://ctext.org/wiki.pl?if=gb&res=1106\n历史典籍::https://ctext.org/wiki.pl?if=gb&res=1112",
+    "searchUrl": "https://ctext.org/searchbooks.pl?if=gb&searchu=searchKey",
+    "respondTime": 30000,
+    "ruleBookInfo": {},
+    "ruleContent": {
+      "content": "text@css#.text"
+    },
+    "ruleExplore": {
+      "author": "",
+      "bookList": "css#.chapter-list a",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "",
+      "lastChapter": "",
+      "name": "text"
+    },
+    "ruleSearch": {
+      "author": "",
+      "bookList": "css#.search-result a",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "",
+      "lastChapter": "",
+      "name": "text"
+    },
+    "ruleToc": {
+      "chapterList": "css#.chapter-list a",
+      "chapterName": "text",
+      "chapterUrl": "href@css#a"
+    },
+    "weight": 0
+  },
+  {
+    "bookSourceComment": "古诗文网",
+    "bookSourceGroup": "诗词",
+    "bookSourceName": "古诗文网",
+    "bookSourceType": 0,
+    "bookSourceUrl": "https://www.gushiwen.cn",
+    "customOrder": 1,
+    "enabled": true,
+    "enabledExplore": true,
+    "exploreUrl": "唐诗::https://www.gushiwen.cn/type.aspx?type=1\n宋词::https://www.gushiwen.cn/type.aspx?type=2\n元曲::https://www.gushiwen.cn/type.aspx?type=3\n古文::https://www.gushiwen.cn/type.aspx?type=4",
+    "searchUrl": "https://www.gushiwen.cn/search.aspx?value=searchKey",
+    "respondTime": 30000,
+    "ruleBookInfo": {},
+    "ruleContent": {
+      "content": "text@css#.contson"
+    },
+    "ruleExplore": {
+      "author": "text@css#.author",
+      "bookList": "css#.sons",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "text@css#.intro",
+      "lastChapter": "",
+      "name": "text@css#.tt"
+    },
+    "ruleSearch": {
+      "author": "text@css#.author",
+      "bookList": "css#.sons",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "text@css#.intro",
+      "lastChapter": "",
+      "name": "text@css#.tt"
+    },
+    "ruleToc": {
+      "chapterList": "css#.sons",
+      "chapterName": "text@css#.tt",
+      "chapterUrl": "href@css#a"
+    },
+    "weight": 0
+  },
+  {
+    "bookSourceComment": "维基文库中文",
+    "bookSourceGroup": "古籍",
+    "bookSourceName": "维基文库",
+    "bookSourceType": 0,
+    "bookSourceUrl": "https://zh.wikisource.org",
+    "customOrder": 2,
+    "enabled": true,
+    "enabledExplore": true,
+    "exploreUrl": "四大名著::https://zh.wikisource.org/wiki/四大名著\n古典文学::https://zh.wikisource.org/wiki/分类:古典文学",
+    "searchUrl": "https://zh.wikisource.org/w/index.php?title=Special:搜索&search=searchKey",
+    "respondTime": 30000,
+    "ruleBookInfo": {},
+    "ruleContent": {
+      "content": "text@css#.mw-parser-output"
+    },
+    "ruleExplore": {
+      "author": "",
+      "bookList": "css#mw-pages a",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "",
+      "lastChapter": "",
+      "name": "text"
+    },
+    "ruleSearch": {
+      "author": "",
+      "bookList": "css#mw-search-result",
+      "bookUrl": "href@css#a",
+      "coverUrl": "",
+      "intro": "text@css#.searchresult",
+      "lastChapter": "",
+      "name": "text@css#a"
+    },
+    "ruleToc": {
+      "chapterList": "css#mw-pages a",
+      "chapterName": "text",
+      "chapterUrl": "href@css#a"
+    },
+    "weight": 0
+  }
+]
