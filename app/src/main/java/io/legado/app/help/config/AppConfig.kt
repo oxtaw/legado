@@ -371,6 +371,12 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefString(PreferKey.ttsEngine, value)
         }
 
+    var edgeTtsVoice: String
+        get() = appCtx.getPrefString(PreferKey.edgeTtsVoice, "zh-CN-XiaoxiaoNeural")
+        set(value) {
+            appCtx.putPrefString(PreferKey.edgeTtsVoice, value)
+        }
+
     var webPort: Int
         get() = appCtx.getPrefInt(PreferKey.webPort, 1122)
         set(value) {

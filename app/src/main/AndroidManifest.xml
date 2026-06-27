@@ -302,6 +302,9 @@
         <service
             android:name=".service.DownloadService"
             android:foregroundServiceType="dataSync" />
+        <service
+            android:name=".service.EdgeTtsReadAloudService"
+            android:foregroundServiceType="mediaPlayback" />
 
 
 
