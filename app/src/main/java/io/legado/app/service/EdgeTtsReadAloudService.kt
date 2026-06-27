@@ -4,27 +4,16 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
-import androidx.media3.database.StandaloneDatabaseProvider
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.cache.CacheDataSink
-import androidx.media3.datasource.cache.CacheDataSource
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
-import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
-import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import io.legado.app.R
 import io.legado.app.constant.AppLog
 import io.legado.app.constant.AppPattern
+import io.legado.app.constant.IntentAction
 import io.legado.app.exception.NoStackTraceException
 import io.legado.app.help.config.AppConfig
 import io.legado.app.help.coroutine.Coroutine
@@ -33,20 +22,16 @@ import io.legado.app.model.ReadBook
 import io.legado.app.tts.EdgeTtsHelper
 import io.legado.app.utils.FileUtils
 import io.legado.app.utils.MD5Utils
-import io.legado.app.utils.printOnDebug
 import io.legado.app.utils.servicePendingIntent
 import io.legado.app.utils.toastOnUi
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import splitties.init.appCtx
 import java.io.File
 import java.io.FileOutputStream
 
@@ -63,32 +48,15 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
     private val ttsFolderPath: String by lazy {
         cacheDir.absolutePath + File.separator + "edgeTts" + File.separator
     }
-    private val cache by lazy {
-        SimpleCache(
-            File(cacheDir, "edgeTts_cache"),
-            LeastRecentlyUsedCacheEvictor(128 * 1024 * 1024),
-            StandaloneDatabaseProvider(appCtx)
-        )
-    }
-    private val cacheDataSinkFactory by lazy {
-        CacheDataSink.Factory()
-            .setCache(cache)
-    }
-    private val loadErrorHandlingPolicy by lazy {
-        CustomLoadErrorHandlingPolicy()
-    }
     private var speechRate: Int = AppConfig.speechRatePlay + 5
-    private var downloadTask: Coroutine<*>? = null
+    private var downloadTask: io.legado.app.help.coroutine.Coroutine<*>? = null
     private var playIndexJob: Job? = null
-    private var downloadErrorNo: Int = 0
     private var playErrorNo = 0
     private val downloadTaskActiveLock = Mutex()
     private var consecutiveFailures = 0
     private val maxConsecutiveFailures = 3
 
     companion object {
-        const val ACTION_FALLBACK_TO_SYSTEM_TTS = "io.legado.app.FALLBACK_TTS"
-
         /** Edge TTS 中文语音列表 */
         val CHINESE_VOICES = listOf(
             "zh-CN-XiaoxiaoNeural" to "晓晓（女，温柔自然）",
@@ -108,7 +76,6 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
         super.onDestroy()
         downloadTask?.cancel()
         exoPlayer.release()
-        cache.release()
         Coroutine.async {
             removeCacheFile()
         }
@@ -142,10 +109,6 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
         }
     }
 
-    /**
-     * 下载音频并播放（非流式模式）
-     * 优化：预加载下一段，减少播放间断
-     */
     private fun downloadAndPlayAudios() {
         exoPlayer.clearMediaItems()
         downloadTask?.cancel()
@@ -212,9 +175,6 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
         }
     }
 
-    /**
-     * 通过 Edge TTS 获取音频数据
-     */
     private suspend fun getEdgeTtsAudio(text: String): ByteArray? {
         val voice = AppConfig.edgeTtsVoice
         val rate = getEdgeTtsRate()
@@ -228,20 +188,14 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
     }
 
     private fun getEdgeTtsRate(): String {
-        // speechRate: 0-10, 5 = 正常速度
         val rate = (AppConfig.speechRatePlay - 5) * 10
         return if (rate >= 0) "+${rate}%" else "${rate}%"
     }
 
-    /**
-     * 降级到系统 TTS
-     */
     private fun fallbackToSystemTts() {
         AppLog.put("Edge TTS 不可用，降级到系统 TTS")
         toastOnUi("Edge TTS 不可用，已切换到系统朗读")
-        // 停止当前服务
         playStop()
-        // 通知 ReadAloud 切换到系统 TTS
         val intent = Intent(this, TTSReadAloudService::class.java)
         intent.action = IntentAction.play
         intent.putExtra("play", true)
@@ -254,7 +208,10 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
         stopSelf()
     }
 
-    private fun md5SpeakFileName(content: String, textChapter: io.legado.app.ui.book.read.page.entities.TextChapter? = this.textChapter): String {
+    private fun md5SpeakFileName(
+        content: String,
+        textChapter: io.legado.app.ui.book.read.page.entities.TextChapter? = this.textChapter
+    ): String {
         return MD5Utils.md5Encode16(textChapter?.title ?: "") + "_" +
                 MD5Utils.md5Encode16("edge-tts-|-$speechRate-|-$content")
     }
@@ -414,9 +371,4 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
         return servicePendingIntent<EdgeTtsReadAloudService>(actionStr)
     }
 
-    class CustomLoadErrorHandlingPolicy : DefaultLoadErrorHandlingPolicy(0) {
-        override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-            return C.TIME_UNSET
-        }
-    }
 }

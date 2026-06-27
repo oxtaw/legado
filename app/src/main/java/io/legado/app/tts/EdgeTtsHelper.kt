@@ -8,7 +8,6 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-import okio.Buffer
 import java.io.ByteArrayOutputStream
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -122,7 +121,7 @@ object EdgeTtsHelper {
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                if (!cont.isActive) return
+                if (cont.isCancelled) return
                 val audioData = audioBuffer.toByteArray()
                 if (audioData.isNotEmpty()) {
                     cont.resume(EdgeTtsResult(success = true, audioData = audioData))
