@@ -287,6 +287,69 @@
             </intent-filter>
         </activity>
 
+        <!-- 登录 -->
+        <activity
+            android:name=".ui.login.SourceLoginActivity"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <!-- 字典规则 -->
+        <activity
+            android:name=".ui.dict.rule.DictRuleActivity"
+            android:launchMode="singleTop" />
+        <!-- RSS相关 -->
+        <activity
+            android:name=".ui.rss.article.RssSortActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.rss.read.ReadRssActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.rss.source.debug.RssSourceDebugActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.rss.source.manage.RssSourceActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.rss.source.edit.RssSourceEditActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name=".ui.rss.favorites.RssFavoritesActivity"
+            android:launchMode="singleTop" />
+        <!-- 关联/导入 -->
+        <activity
+            android:name=".ui.association.OnLineImportActivity"
+            android:exported="true"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.association.VerificationCodeActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.association.OpenUrlConfirmActivity"
+            android:launchMode="singleTop" />
+        <!-- 文件管理 -->
+        <activity
+            android:name=".ui.file.FileManageActivity"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".ui.file.HandleFileActivity"
+            android:launchMode="singleTop" />
+        <!-- 浏览器 -->
+        <activity
+            android:name=".ui.browser.WebViewActivity"
+            android:launchMode="singleTop" />
+        <!-- 二维码 -->
+        <activity
+            android:name=".ui.qrcode.QrCodeActivity"
+            android:launchMode="singleTop" />
+        <!-- 有声书 -->
+        <activity
+            android:name=".ui.book.audio.AudioPlayActivity"
+            android:launchMode="singleTask" />
+        <!-- 漫画 -->
+        <activity
+            android:name=".ui.book.manga.ReadMangaActivity"
+            android:launchMode="singleTask" />
+
         <service
             android:name=".service.CheckSourceService"
             android:foregroundServiceType="dataSync" />
