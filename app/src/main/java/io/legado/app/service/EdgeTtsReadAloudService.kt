@@ -176,7 +176,7 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
     }
 
     private suspend fun getEdgeTtsAudio(text: String): ByteArray? {
-        val voice = AppConfig.edgeTtsVoice
+        val voice = AppConfig.edgeTtsVoice ?: "zh-CN-XiaoxiaoNeural"
         val rate = getEdgeTtsRate()
         val result = EdgeTtsHelper.synthesize(text, voice, rate)
         if (result.success && result.audioData != null) {
