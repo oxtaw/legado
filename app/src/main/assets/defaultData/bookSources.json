@@ -163,7 +163,7 @@
     },
     "ruleSearch": {
       "author": "class.author@class.name.0@text",
-      "bookList": "<js>\npath='class.res-book-item';\nu=java.get('url');\nc=java.getElement(path);\nif (!c.length && result.includes('var buid')) {\n  cookie.removeCookie(source.getKey());\n  java.toast('在网页加载完成后，手动点击右上角 [√] 即可');\n  java.startBrowserAwait('https://www.qidian.com/all/','过起点搜索的 cookie 验证');\n  a=java.ajax(u);\n  java.setContent(a);\n  java.getElement(path);\n}\n</js>",
+      "bookList": "<js>\npath='class.res-book-item';\nu=java.get('url');\nc=java.getElement(path);\nif (!c.length && result.includes('var buid')) {\n  cookie.removeCookie(source.getKey());\n  java.toast('起点搜索需要Cookie验证，请先在书源管理中手动打开起点网页完成验证');\n}\n</js>",
       "bookUrl": "a[data-bid]@data-bid@js:'https://m.qidian.com/book/'+result+'/'",
       "coverUrl": "class.book-img-box.0@tag.img.0@src",
       "intro": "class.intro.0@text",
