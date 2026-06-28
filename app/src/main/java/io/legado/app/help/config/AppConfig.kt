@@ -371,7 +371,7 @@ object AppConfig : SharedPreferences.OnSharedPreferenceChangeListener {
             appCtx.putPrefString(PreferKey.ttsEngine, value)
         }
 
-    var edgeTtsVoice: String
+    var edgeTtsVoice: String?
         get() = appCtx.getPrefString(PreferKey.edgeTtsVoice, "zh-CN-XiaoxiaoNeural")
         set(value) {
             appCtx.putPrefString(PreferKey.edgeTtsVoice, value)

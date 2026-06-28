@@ -169,7 +169,7 @@ class EdgeTtsReadAloudService : BaseReadAloudService(), Player.Listener {
             }
             val file = getSpeakFileAsMd5(fileName)
             val mediaItem = MediaItem.fromUri(Uri.fromFile(file))
-            launch(Main) {
+            lifecycleScope.launch(Main) {
                 exoPlayer.addMediaItem(mediaItem)
             }
         }
