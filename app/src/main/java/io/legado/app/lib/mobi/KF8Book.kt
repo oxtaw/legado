@@ -174,10 +174,24 @@ class KF8Book(
 
     private fun getRaw(offset: Int, len: Int): ByteArray {
         val inputStream = getTextRecordInputStream()
-        val byteArray = ByteArray(len)
-        inputStream.skip(offset.toLong())
-        inputStream.read(byteArray)
-        return byteArray
+        try {
+            val byteArray = ByteArray(len)
+            var skipped = 0L
+            while (skipped < offset.toLong()) {
+                val s = inputStream.skip(offset.toLong() - skipped)
+                if (s == 0L) break
+                skipped += s
+            }
+            var pos = 0
+            while (pos < byteArray.size) {
+                val read = inputStream.read(byteArray, pos, byteArray.size - pos)
+                if (read == -1) break
+                pos += read
+            }
+            return byteArray
+        } finally {
+            inputStream.close()
+        }
     }
 
     private fun processNCX() {

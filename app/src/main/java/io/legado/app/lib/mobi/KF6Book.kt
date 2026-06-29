@@ -34,8 +34,18 @@ class KF6Book(
     fun getSectionText(section: KF6Section): String {
         val inputStream = getTextRecordInputStream()
         val byteArray = ByteArray(section.length)
-        inputStream.skip(section.start.toLong())
-        inputStream.read(byteArray)
+        var skipped = 0L
+        while (skipped < section.start.toLong()) {
+            val s = inputStream.skip(section.start.toLong() - skipped)
+            if (s == 0L) break
+            skipped += s
+        }
+        var offset = 0
+        while (offset < byteArray.size) {
+            val read = inputStream.read(byteArray, offset, byteArray.size - offset)
+            if (read == -1) break
+            offset += read
+        }
         return String(byteArray, charset)
     }
 

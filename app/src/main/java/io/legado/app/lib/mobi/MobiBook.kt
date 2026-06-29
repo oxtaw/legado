@@ -51,7 +51,7 @@ abstract class MobiBook(
         1 -> PlainDecompressor()
         2 -> Lz77Decompressor(max(4096, palmdoc.recordSize))
         17480 -> HuffcdicDecompressor(this, mobi)
-        else -> error("unknown compression $charset")
+        else -> error("unknown compression $compression")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -119,6 +119,9 @@ abstract class MobiBook(
                 }
 
                 val b = bis.read()
+                if (b == -1) {
+                    return -1
+                }
 
                 available--
                 pos++
@@ -141,7 +144,7 @@ abstract class MobiBook(
                 }
 
                 val bIndex = textRecordOffsets.binarySearch(pos + n1)
-                index = abs(bIndex + 1)
+                index = if (bIndex >= 0) bIndex else abs(bIndex + 1)
 
                 bis = getTextRecord(index).inputStream()
 
