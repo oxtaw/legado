@@ -41,43 +41,43 @@
     "weight": 0
   },
   {
-    "bookSourceComment": "古诗文网",
+    "bookSourceComment": "古文岛（原古诗文网）",
     "bookSourceGroup": "诗词",
-    "bookSourceName": "古诗文网",
+    "bookSourceName": "古文岛",
     "bookSourceType": 0,
-    "bookSourceUrl": "https://www.gushiwen.cn",
+    "bookSourceUrl": "https://www.guwendao.net",
     "customOrder": 1,
     "enabled": true,
     "enabledExplore": true,
-    "exploreUrl": "唐诗::https://www.gushiwen.cn/type.aspx?type=1\n宋词::https://www.gushiwen.cn/type.aspx?type=2\n元曲::https://www.gushiwen.cn/type.aspx?type=3\n古文::https://www.gushiwen.cn/type.aspx?type=4",
-    "searchUrl": "https://www.gushiwen.cn/search.aspx?value=searchKey",
+    "exploreUrl": "唐诗::https://www.guwendao.net/shiwens/default.aspx?xstr=%E8%AF%97&cstr=%E5%94%90%E4%BB%A3\n宋词::https://www.guwendao.net/shiwens/default.aspx?xstr=%E8%AF%8D&cstr=%E5%AE%8B%E4%BB%A3\n元曲::https://www.guwendao.net/shiwens/default.aspx?xstr=%E6%9B%B2&cstr=%E5%85%83%E4%BB%A3\n古文::https://www.guwendao.net/shiwens/default.aspx?xstr=%E6%96%87%E8%A8%80%E6%96%87",
+    "searchUrl": "https://www.guwendao.net/search.aspx?value=searchKey",
     "respondTime": 30000,
     "ruleBookInfo": {},
     "ruleContent": {
       "content": "text@css#.contson"
     },
     "ruleExplore": {
-      "author": "text@css#.author",
+      "author": "text@css#.source",
       "bookList": "css#.sons",
-      "bookUrl": "href@css#a",
+      "bookUrl": "href@css#p>a",
       "coverUrl": "",
-      "intro": "text@css#.intro",
+      "intro": "",
       "lastChapter": "",
-      "name": "text@css#.tt"
+      "name": "text@css#p>b"
     },
     "ruleSearch": {
-      "author": "text@css#.author",
+      "author": "text@css#.source",
       "bookList": "css#.sons",
-      "bookUrl": "href@css#a",
+      "bookUrl": "href@css#p>a",
       "coverUrl": "",
-      "intro": "text@css#.intro",
+      "intro": "",
       "lastChapter": "",
-      "name": "text@css#.tt"
+      "name": "text@css#p>b"
     },
     "ruleToc": {
       "chapterList": "css#.sons",
-      "chapterName": "text@css#.tt",
-      "chapterUrl": "href@css#a"
+      "chapterName": "text@css#p>b",
+      "chapterUrl": "href@css#p>a"
     },
     "weight": 0
   },

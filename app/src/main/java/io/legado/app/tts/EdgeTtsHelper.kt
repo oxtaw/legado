@@ -8,7 +8,9 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
 import java.io.ByteArrayOutputStream
+import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
@@ -16,17 +18,25 @@ import kotlin.coroutines.resume
 /**
  * Edge TTS 辅助类
  * 通过 WebSocket 连接微软 Bing Speech API 实现高质量 TTS
+ *
+ * 2025年12月 Microsoft 修改了 API，需要:
+ * 1. 新的 WSS URL (readaloud/edge/v1)
+ * 2. Sec-MS-GEC DRM token
+ * 3. MUID cookie
+ * 4. 更新的 audio 二进制协议解析
  */
 object EdgeTtsHelper {
 
-    private const val WSS_URL =
-        "wss://speech.platform.bing.com/consumer/speech.synthesize"
+    private const val TRUSTED_CLIENT_TOKEN = "6A5AA1D4EAFF4E9FB37E23D68491D6F4"
+    private const val SEC_MS_GEC_VERSION = "1-130.0.2849.68"
+    private const val CHROMIUM_VERSION = "130.0.2849.68"
+    private const val WIN_EPOCH = 11644473600L
+    private const val S_TO_NS = 1e9.toLong()
 
-    private val EDGE_HEADERS = mapOf(
-        "Origin" to "chrome-extension://jdiccldimpdaibmpdmdce",
-        "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0"
-    )
+    private const val WSS_URL =
+        "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
+
+    private val BINARY_DELIM = "Path:audio\r\n".toByteArray()
 
     data class EdgeTtsResult(
         val success: Boolean,
@@ -40,6 +50,50 @@ object EdgeTtsHelper {
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(15, TimeUnit.SECONDS)
             .build()
+    }
+
+    /**
+     * 生成 Sec-MS-GEC DRM token
+     *
+     * 算法:
+     * 1. 获取当前 Unix 时间戳
+     * 2. 加上 Windows 纪元偏移 (11644473600)
+     * 3. 向下取整到最近的 300 秒 (5分钟)
+     * 4. 转换为 100 纳秒间隔 (Windows 文件时间格式)
+     * 5. 拼接 TRUSTED_CLIENT_TOKEN 后做 SHA-256
+     * 6. 返回大写十六进制字符串
+     */
+    private fun generateSecMsGec(): String {
+        val nowSeconds = System.currentTimeMillis() / 1000
+        var ticks = nowSeconds + WIN_EPOCH
+        ticks -= ticks % 300
+        val ticks100ns = ticks * (S_TO_NS / 100)
+        val strToHash = "${ticks100ns.toLong()}$TRUSTED_CLIENT_TOKEN"
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(strToHash.toByteArray(Charsets.US_ASCII))
+        return digest.joinToString("") { "%02X".format(it) }
+    }
+
+    /**
+     * 生成随机 MUID (32位大写十六进制)
+     */
+    private fun generateMuid(): String {
+        val bytes = ByteArray(16)
+        java.security.SecureRandom().nextBytes(bytes)
+        return bytes.joinToString("") { "%02X".format(it) }
+    }
+
+    /**
+     * 构建带认证参数的 WebSocket URL
+     */
+    private fun buildWsUrl(): String {
+        val connectionId = UUID.randomUUID().toString().replace("-", "")
+        val secMsGec = generateSecMsGec()
+        return "$WSS_URL?" +
+                "TrustedClientToken=$TRUSTED_CLIENT_TOKEN" +
+                "&Sec-MS-GEC=$secMsGEC" +
+                "&Sec-MS-GEC-Version=$SEC_MS_GEC_VERSION" +
+                "&ConnectionId=$connectionId"
     }
 
     /**
@@ -71,9 +125,18 @@ object EdgeTtsHelper {
         var hasError = false
         var errorMsg: String? = null
 
+        val muid = generateMuid()
+        val url = buildWsUrl()
+
         val requestBuilder = Request.Builder()
-            .url(WSS_URL)
-        EDGE_HEADERS.forEach { (k, v) -> requestBuilder.addHeader(k, v) }
+            .url(url)
+        requestBuilder.addHeader("Origin", "chrome-extension://jdiccldimpdaibmpdmdce")
+        requestBuilder.addHeader(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/$CHROMIUM_VERSION Safari/537.36 Edg/$CHROMIUM_VERSION"
+        )
+        requestBuilder.addHeader("Cookie", "muid=$muid")
 
         val webSocket = client.newWebSocket(requestBuilder.build(), object : WebSocketListener() {
 
@@ -87,18 +150,25 @@ object EdgeTtsHelper {
                 webSocket.send(ssmlMsg)
             }
 
-            override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
-                // 二进制消息 = 音频数据
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                // 新协议: 二进制消息中包含 Path:audio\r\n 分隔符
                 val data = bytes.toByteArray()
-                if (data.size > 2) {
-                    // 跳过前 2 字节的头部标记
+                val delimIndex = indexOf(data, BINARY_DELIM)
+                if (delimIndex >= 0) {
+                    // 跳过分隔符本身，提取音频数据
+                    val audioStart = delimIndex + BINARY_DELIM.size
+                    if (audioStart < data.size) {
+                        audioBuffer.write(data, audioStart, data.size - audioStart)
+                    }
+                } else if (data.size > 2) {
+                    // 兼容旧协议: 跳过前 2 字节的头部标记
                     audioBuffer.write(data, 2, data.size - 2)
                 }
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 // 文本消息，检查是否为 turn.end
-                if (text.contains("turn.end")) {
+                if (text.contains("Path:turn.end")) {
                     webSocket.close(1000, "done")
                     val audioData = audioBuffer.toByteArray()
                     if (audioData.isNotEmpty() && !hasError) {
@@ -117,7 +187,9 @@ object EdgeTtsHelper {
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 hasError = true
                 errorMsg = t.message
-                cont.resume(EdgeTtsResult(success = false, error = t.message))
+                if (cont.isActive) {
+                    cont.resume(EdgeTtsResult(success = false, error = t.message))
+                }
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -139,6 +211,19 @@ object EdgeTtsHelper {
         cont.invokeOnCancellation {
             webSocket.cancel()
         }
+    }
+
+    /**
+     * 在字节数组中查找子数组的索引
+     */
+    private fun indexOf(data: ByteArray, pattern: ByteArray): Int {
+        outer@ for (i in 0..data.size - pattern.size) {
+            for (j in pattern.indices) {
+                if (data[i + j] != pattern[j]) continue@outer
+            }
+            return i
+        }
+        return -1
     }
 
     private fun buildSpeechConfig(requestId: String): String {
