@@ -88,10 +88,10 @@ object EdgeTtsHelper {
      */
     private fun buildWsUrl(): String {
         val connectionId = UUID.randomUUID().toString().replace("-", "")
-        val secMsGec = generateSecMsGec()
+        val secMsGecToken = generateSecMsGec()
         return "$WSS_URL?" +
                 "TrustedClientToken=$TRUSTED_CLIENT_TOKEN" +
-                "&Sec-MS-GEC=$secMsGEC" +
+                "&Sec-MS-GEC=$secMsGecToken" +
                 "&Sec-MS-GEC-Version=$SEC_MS_GEC_VERSION" +
                 "&ConnectionId=$connectionId"
     }
