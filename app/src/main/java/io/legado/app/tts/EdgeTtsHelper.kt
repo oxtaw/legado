@@ -1,9 +1,9 @@
 package io.legado.app.tts
 
+import io.legado.app.help.http.getProxyClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -12,7 +12,6 @@ import okio.ByteString
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 /**
@@ -45,11 +44,7 @@ object EdgeTtsHelper {
     )
 
     private val client by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(15, TimeUnit.SECONDS)
-            .build()
+        getProxyClient()
     }
 
     /**
@@ -170,6 +165,7 @@ object EdgeTtsHelper {
                 // 文本消息，检查是否为 turn.end
                 if (text.contains("Path:turn.end")) {
                     webSocket.close(1000, "done")
+                    if (!cont.isActive) return
                     val audioData = audioBuffer.toByteArray()
                     if (audioData.isNotEmpty() && !hasError) {
                         cont.resume(EdgeTtsResult(success = true, audioData = audioData))
@@ -193,7 +189,7 @@ object EdgeTtsHelper {
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                if (cont.isCancelled) return
+                if (!cont.isActive) return
                 val audioData = audioBuffer.toByteArray()
                 if (audioData.isNotEmpty()) {
                     cont.resume(EdgeTtsResult(success = true, audioData = audioData))
@@ -272,9 +268,11 @@ object EdgeTtsHelper {
      */
     fun isNetworkAvailable(): Boolean {
         return try {
-            val socket = java.net.Socket()
-            socket.connect(java.net.InetSocketAddress("speech.platform.bing.com", 443), 5000)
-            socket.close()
+            val request = Request.Builder()
+                .url("https://speech.platform.bing.com")
+                .build()
+            val response = client.newCall(request).execute()
+            response.close()
             true
         } catch (e: Exception) {
             false
